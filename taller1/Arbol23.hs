@@ -42,17 +42,22 @@ foldNat caso0 casoSuc n | n == 0 = caso0
 {- Funciones pedidas. -}
 
 --foldA23::
-foldA23 = undefined
+foldA23 :: (a -> c) -> (b -> c -> c -> c) -> (b -> b -> c -> c -> c -> c) -> Árbol23 a b -> c
+foldA23 casoHoja casoDos casoTres arbol = case arbol of
+                                            Hoja a -> casoHoja a
+                                            Dos b1 ab1 ab2 -> casoDos b1 (rec ab1) (rec ab2)
+                                            Tres b1 b2 ab1 ab2 ab3 -> casoTres b1 b2 (rec ab1) (rec ab2) (rec ab3)
+                                            where rec = foldA23 casoHoja casoDos casoTres
 
 --Lista las hojas de izquierda a derecha.
-hojas::Árbol23 a b->[a]
-hojas = undefined
+hojas::Árbol23 a b -> [a]
+hojas = foldA23 (\a -> [a]) (\_ ls1 ls2 -> ls1 ++ ls2) (\_ _ ls1 ls2 ls3 -> ls1 ++ ls2 ++ ls3)
 
 esHoja::Árbol23 a b->Bool
-esHoja = undefined
+esHoja = foldA23 (const True) (\_ _ _ -> False) (\_ _ _ _ _ -> False) 
 
 mapA23::(a->c)->(b->d)->Árbol23 a b->Árbol23 c d
-mapA23 = undefined
+mapA23 f g = foldA23 (\a -> Hoja (f a)) (\b1 ab1 ab2 -> Dos (g b1) ab1 ab2) (\b1 b2 ab1 ab2 ab3 -> Tres (g b1) (g b2) ab1 ab2 ab3)  
 
 --Ejemplo de uso de mapA23.
 --Incrementa en 1 el valor de las hojas.
@@ -62,10 +67,16 @@ incrementarHojas = mapA23 (+1) id
 
 --Trunca el árbol hasta un determinado nivel. Cuando llega a 0, reemplaza el resto del árbol por una hoja con el valor indicado.
 --Funciona para árboles infinitos.
+applyFunctionToBranches :: (Árbol23 a b -> Árbol23 a b) -> Árbol23 a b -> Árbol23 a b
+applyFunctionToBranches f ab = case ab of 
+                                  Hoja a -> Hoja a
+                                  Dos b1 ab1 ab2 -> Dos b1 (f ab1) (f ab2)
+                                  Tres b1 b2 ab1 ab2 ab3 -> Tres b1 b2 (f ab1) (f ab2) (f ab3) 
+
 truncar::a->Integer->Árbol23 a b->Árbol23 a b
-truncar = undefined
+truncar value n  = foldNat ( \_ -> Hoja value) (applyFunctionToBranches) n
 
 --Evalúa las funciones tomando los valores de los hijos como argumentos.
 --En el caso de que haya 3 hijos, asocia a izquierda.
 evaluar::Árbol23 a (a->a->a)->a
-evaluar = undefined
+evaluar = foldA23 (\a -> a) (\f1 res1 res2 -> f1 res1 res2) (\f1 f2 res1 res2 res3 -> f2 (f1 res1 res2) res3)

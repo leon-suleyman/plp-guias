@@ -80,9 +80,15 @@ esVacío d = case estructura d of Nothing -> True ; _ -> False
 {- Funciones a implementar. -}
 
 definir::clave->valor->Diccionario clave valor->Diccionario clave valor
-definir = undefined
+definir key value dicc = if isNothing (estructura dicc) then Dicc (cmp dicc) (Just (Hoja (key, value))) else Dicc (cmp dicc) (Just (insertar key value (cmp dicc) (fromJust (estructura dicc))))
 
 obtener::Eq clave=>clave->Diccionario clave valor->Maybe valor
 obtener = undefined
+
+obtener _ (Dicc cmp Nothing) = Nothing
+obtener clave (Dicc cmp estructura) = let arbol = fromJust estructura
+                                        case arbol of
+                                            Hoja (key, value) = if not (cmp key clave && (cmp clave key)) then Just value else Nothing
+                                            Dos key1 ab1 ab2 = if cmp clave key1 then (obtener clave (Dicc cmp Just ab1)) else (obtener clave (Dicc cmp Just ab2))
 
 

@@ -17,6 +17,10 @@ arbolito2 = Dos True (Hoja (-1)) (Tres False True (Hoja 0) (Hoja (-2)) (Hoja 4))
 arbolito3::Árbol23 Integer (Integer->Integer->Integer)
 arbolito3 = Dos (+) (Tres (*) (-) (Hoja 1) (Hoja 2) (Hoja 3)) (incrementarHojas arbolito3)
 
+arbolA::Árbol23 Char Integer
+arbolA = Hoja 'a'
+
+
 {- Diccionarios de prueba: -}
 
 dicc1::Diccionario Integer String
@@ -53,6 +57,7 @@ testsEj1 = test [
   ]
   
 testsEj2 = test [
+  "a" ~=? hojas arbolA,
   "abcdefghi" ~=? hojas arbolito1,
   [1,2,3,2,3,4,3,4,5,4] ~=? take 10 (hojas arbolito3),
   False ~=? esHoja arbolito1
