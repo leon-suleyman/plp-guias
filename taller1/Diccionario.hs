@@ -82,13 +82,21 @@ esVacío d = case estructura d of Nothing -> True ; _ -> False
 definir::clave->valor->Diccionario clave valor->Diccionario clave valor
 definir key value dicc = if isNothing (estructura dicc) then Dicc (cmp dicc) (Just (Hoja (key, value))) else Dicc (cmp dicc) (Just (insertar key value (cmp dicc) (fromJust (estructura dicc))))
 
+buscarClave :: Comp clave -> clave -> clave -> Maybe valor -> Maybe valor -> Maybe valor
+buscarClave cmp claveBuscada claveEncontrada siEsMenor siEsMayor =  if cmp claveBuscada claveEncontrada then siEsMenor else siEsMayor
+
 obtener::Eq clave=>clave->Diccionario clave valor->Maybe valor
-obtener = undefined
-
 obtener _ (Dicc cmp Nothing) = Nothing
-obtener clave (Dicc cmp estructura) = let arbol = fromJust estructura
-                                        case arbol of
-                                            Hoja (key, value) = if not (cmp key clave && (cmp clave key)) then Just value else Nothing
-                                            Dos key1 ab1 ab2 = if cmp clave key1 then (obtener clave (Dicc cmp Just ab1)) else (obtener clave (Dicc cmp Just ab2))
+obtener clave (Dicc cmp estructura) = let arbol = fromJust estructura in
+                                            foldA23 (\(key, value) -> buscarClave cmp clave key Nothing (buscarClave cmp clave key (Just value) Nothing))
+                                                    (\key1 value1 value2 -> buscarClave cmp clave key1  value1 value2)
+                                                    (\key1 key2 value1 value2 value3 -> buscarClave cmp clave key1 value1 (buscarClave cmp clave key2 value2 value3))
+                                                    arbol
 
+{--obtener clave (Dicc cmp estructura) = let arbol = fromJust estructura in
+                                        case arbol of
+                                            Hoja (key, value) -> if not (cmp key clave && cmp clave key) then Just value else Nothing
+                                            Dos key1 ab1 ab2 -> buscarClave cmp clave key1 (obtener clave (Dicc cmp $ Just ab1)) (obtener clave (Dicc cmp $ Just ab2))
+                                            Tres key1 key2 ab1 ab2 ab3 -> buscarClave cmp clave key1 (obtener clave (Dicc cmp $ Just ab1)) (buscarClave cmp clave key2 (obtener clave (Dicc cmp $ Just ab2)) (obtener clave (Dicc cmp $ Just ab3)))
+--}
 
