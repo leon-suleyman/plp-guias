@@ -88,7 +88,7 @@ buscarClave cmp claveBuscada claveEncontrada siEsMenor siEsMayor =  if cmp clave
 obtener::Eq clave=>clave->Diccionario clave valor->Maybe valor
 obtener _ (Dicc cmp Nothing) = Nothing
 obtener clave (Dicc cmp estructura) = let arbol = fromJust estructura in
-                                            foldA23 (\(key, value) -> buscarClave cmp clave key Nothing (buscarClave cmp clave key (Just value) Nothing))
+                                            foldA23 (\(key, value) -> buscarClave cmp clave key Nothing (buscarClave cmp key clave Nothing (Just value)))
                                                     (\key1 value1 value2 -> buscarClave cmp clave key1  value1 value2)
                                                     (\key1 key2 value1 value2 value3 -> buscarClave cmp clave key1 value1 (buscarClave cmp clave key2 value2 value3))
                                                     arbol
