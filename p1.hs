@@ -90,3 +90,17 @@ permutaciones = foldr (\x rec -> if null rec then [[x]] else concatMap (\xs -> [
 
 
 --ej12
+--entrelazar no es recursión estructural, ya que debe hacer recursión sobre dos estructuras al mismo tiempo.
+--elemtos en posiciones pares, si lo es, pero se debe usar recr
+
+--ej13
+recr _ z [] = z
+recr f z (x:xs) = f x xs (recr f z xs)
+
+--a hecho en clase
+--b porque necesitamos devolver la cola de la lista al encontrar la primera aparición y no tenemos forma de distinguir la primera de una segunda
+--c 
+insertarOrdenado :: Ord a => a -> [a] -> [a]
+insertarOrdenado a = recr (\x xs rec -> if x < a then x : rec else a : x : xs) [a]
+
+--d no, porque no necesita evaluar la cola xs 
