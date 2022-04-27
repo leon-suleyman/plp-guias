@@ -69,4 +69,24 @@ foldConcat = flip $ foldl (flip (:))
 --foldFilter y Map hechas en clase
 
 --II
+mejorSegun :: (a -> a -> Bool) -> [a] -> a
+mejorSegun cmp = foldr1 (\x rec -> if cmp x rec then x else rec)
 
+--III
+sumasParciales :: Num a => [a] -> [a]
+sumasParciales = foldr (\x rec -> x : map (+x) rec) []
+
+--IV
+sumaAlt :: Num a => [a] -> a
+sumaAlt = foldr (-) 0
+
+--V
+sumaAltReverse :: Num a => [a] -> a
+sumaAltReverse = foldl (-) 0
+
+--VI 
+permutaciones :: [a] -> [[a]]
+permutaciones = foldr (\x rec -> if null rec then [[x]] else concatMap (\xs -> [x:xs, xs ++ [x]] ) rec) []
+
+
+--ej12
