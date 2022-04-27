@@ -23,12 +23,12 @@ import GHC.Natural (isValidNatural)
 -}
 
 --ej2
-curry :: ((a,b) -> c) -> a -> b -> c
+{-curry :: ((a,b) -> c) -> a -> b -> c
 curry f x y = f (x, y)
 
 uncurry :: (a -> b -> c) -> (a, b) -> c
 uncurry f (x,y) = f x y
-
+-}
 --No que yo sepa, porque hay que saber cuantos parametros hay que ver
 
 --ej3
@@ -70,11 +70,11 @@ foldConcat = flip $ foldl (flip (:))
 
 --II
 mejorSegun :: (a -> a -> Bool) -> [a] -> a
-mejorSegun cmp = foldr1 (\x rec -> if cmp x rec then x else rec)
+mejorSegun cmp = foldr1 (\x recu -> if cmp x recu then x else recu)
 
 --III
 sumasParciales :: Num a => [a] -> [a]
-sumasParciales = foldr (\x rec -> x : map (+x) rec) []
+sumasParciales = foldr (\x recu -> x : map (+x) recu) []
 
 --IV
 sumaAlt :: Num a => [a] -> a
@@ -86,11 +86,13 @@ sumaAltReverse = foldl (-) 0
 
 --VI 
 permutaciones :: [a] -> [[a]]
-permutaciones = foldr (\x rec -> if null rec then [[x]] else concatMap (\xs -> [x:xs, xs ++ [x]] ) rec) []
+permutaciones = foldr (\x recu -> if null recu then [[x]] else concatMap (\xs -> [x:xs, xs ++ [x]] ) recu) []
 
 
 --ej12
---entrelazar no es recursión estructural, ya que debe hacer recursión sobre dos estructuras al mismo tiempo.
+--entrelazar es recursión estructural
+entrelazar :: [a] -> [a] -> [a]
+entrelazar = foldr (\x recu ys -> if null ys then [] else x : head ys : recu (tail ys) ) (const [])
 --elemtos en posiciones pares, si lo es, pero se debe usar recr
 
 --ej13
@@ -101,6 +103,25 @@ recr f z (x:xs) = f x xs (recr f z xs)
 --b porque necesitamos devolver la cola de la lista al encontrar la primera aparición y no tenemos forma de distinguir la primera de una segunda
 --c 
 insertarOrdenado :: Ord a => a -> [a] -> [a]
-insertarOrdenado a = recr (\x xs rec -> if x < a then x : rec else a : x : xs) [a]
+insertarOrdenado a = recr (\x xs recu -> if x < a then x : recu else a : x : xs) [a]
 
 --d no, porque no necesita evaluar la cola xs 
+
+--ej15
+--I
+mapPares f = map (uncurry f)
+
+--II
+armarPares :: [a1] -> [a2] -> [(a1, a2)]
+--armarPares [] _ = []
+--armarPares _ [] = []
+--armarPares (x:xs) (y:ys) = (x,y) : armarPares xs ys
+
+--armarPares [] = const []
+--armarPares (x:xs) =  (\ys -> (x, head ys) : armarPares xs (tail ys))
+
+armarPares = foldr (\x recu ys -> if null ys then [] else (x,head ys) : recu (tail ys) ) (const [])
+
+--III
+mapDoble :: (a -> b -> c) -> [a] -> [b] -> [c]
+mapDoble f xs ys = mapPares f (armarPares xs ys)
