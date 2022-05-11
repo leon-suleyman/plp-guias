@@ -166,10 +166,10 @@ generateFrom stop next xs = last $ takeWhile (not.stop) $ iterate (\xs ->  xs ++
 
 
 generateBase :: ([a] -> Bool) -> a -> (a -> a) -> [a]
-generateBase stop base next = generate stop (\xs -> if null xs then base else next $ last xs) 
+generateBase stop base next = generate stop (\xs -> if null xs then base else next $ last xs)
 
 factoriales :: Int -> [Int]
-factoriales n = generate (\xs -> length xs > n) (\xs -> if null xs then 1 else (length xs + 1)* last xs) 
+factoriales n = generate (\xs -> length xs > n) (\xs -> if null xs then 1 else (length xs + 1)* last xs)
 
 iterateN :: Int -> (a -> a) -> a -> [a]
 iterateN n f x = generateBase (\xs -> length xs > n) x f
@@ -188,8 +188,8 @@ potencia b e = foldNat e (\_ p -> b * p) 1
 
 type Conj a = (a -> Bool)
 
-vacio :: Conj a 
-vacio = const False 
+vacio :: Conj a
+vacio = const False
 
 agregar :: Eq a => a -> Conj a -> Conj a
 agregar e c = \x -> x == e || c x
@@ -198,9 +198,9 @@ interseccion :: Conj a -> Conj a -> Conj a
 interseccion c1 c2 = \e -> c1 e && c2 e
 
 unionConj :: Conj a -> Conj a -> Conj a
-unionConj c1 c2 = \e -> c1 e || c2 e 
+unionConj c1 c2 = \e -> c1 e || c2 e
 
-conjFuncInf :: Conj (Integer -> Integer) 
+conjFuncInf :: Conj (Integer -> Integer)
 conjFuncInf f = f 0 == 0
 
 singleton :: Eq a => a -> Conj a
@@ -211,3 +211,15 @@ singleton e = \x -> x == e
 
 --Ejercicio 22
 
+data AHD tInterno tHoja = Hoja tHoja
+                          | Rama tInterno (AHD tInterno tHoja)
+                          | Bin (AHD tInterno tHoja) tInterno (AHD tInterno tHoja)
+
+foldAHD :: (tH -> b) -> (tI -> b -> b) -> (b -> tI -> b -> b) -> AHD tI tH -> b
+foldAHD fHoja fRama fBin arbol = case arbol of   Hoja tH -> fHoja tH
+                                                 Rama tI ahd -> fRama tI (rec ahd)
+                                                 Bin ahd tI ahd' -> fBin (rec ahd) tI (rec ahd')
+                                 where rec = foldAHD fHoja fRama fBin
+
+mapAHD :: (a -> b) -> (c -> d) -> AHD a c -> AHD b d
+mapAHD fInterno fHoja = foldAHD (\tH -> Hoja (fHoja tH)) (\tI ahd -> Rama (fInterno tI) ahd) (\ahd tI ahd' -> Bin ahd (fInterno tI) ahd')
