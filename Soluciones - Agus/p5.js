@@ -103,8 +103,74 @@ cero = {
 
 cero.for = function(o){}
 
-//5 te lo debo por ahora
+//4
+//a
+{
+let Punto = {
+  new: function(x,y){
+    return {
+      x: x,
+      y: y,
+      mostrar: function(){return Punto.mostrar(this.x, this.y)}
+      }
+    },
+  mostrar: function(x, y){
+    return "Punto(" + x + " ," + y + ")"
+  }
+}
+let p = Punto.new(1 ,2);
+console.log(p.mostrar());
+Punto.mostrar = function(){ return " unPunto "};
+console.log(p.mostrar());
+}
+//b
+{
+let PuntoColoreado = {
+  new:  function(x,y){
+    nuevoPunto = Punto.new(x,y)
+    nuevoPunto.color = "rojo"
+    return nuevoPunto
+  }
+}
+let p = PuntoColoreado . new (1 ,2) ;
+console .log(p. mostrar () ) ;
+Punto . mostrar = function () { return " UnPunto "};
+console .log(p. mostrar () ) ;
+PuntoColoreado . mostrar = function () { return " UnPuntoColoreado "};
+console .log(p. mostrar () ) ;
+}
 
+//c
+
+PuntoColoreado.newWithColor = function(x, y, color) {
+  nuevoPunto = this.new(x,y)
+  nuevoPunto.color = color
+  return nuevoPunto
+}
+
+//d NO SE HACERLO
+let p1 = Punto . new (1 ,2) ;
+let pc1 = PuntoColoreado . new (1 ,2) ;
+Punto.moverI = function(u) {this.x = this.x + u} //Extensión de Punto para agregar moverX
+let p2 = Punto . new (1 ,2) ;
+let pc2 = PuntoColoreado . new (1 ,2) ;
+
+
+//5
+//a
+{
+  function Punto(x,y){
+    this.x = x,
+    this.y = y,
+    this.mostrar = function(){
+      return "Punto(" + this.x + " ," + this.y + ")"
+    }
+  }
+  let p = new Punto(1 ,2);
+  console.log(p.mostrar());
+  Punto.mostrar = function(){ return " unPunto "}; //Esto no anda y no se por qué
+  console.log(p.mostrar());
+}
 
 //7
 //a
