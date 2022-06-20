@@ -1,4 +1,5 @@
 import GHC.Natural (isValidNatural)
+import Distribution.Simple.Utils (xargs)
 --ej1
 --I
 {-
@@ -36,7 +37,7 @@ uncurry f (x,y) = f x y
 
 --ej4
 --no nos funciona ya que siempre va a estár buscando un 'c' para el primer 'a' y 'b'
-pitagoricas = [(a,b,sqrt(a^2 + b^2)) | a <- [1..], b <-[1..a], c <- [1..(a^2+b^2)/2], c^2 == a^2 + b^2]
+pitagoricas = [(a,b,c) | a <- [1..], b <-[1..a], c <- [1..(a^2+b^2)], c^2 == a^2 + b^2]
 
 --ej5
 isPrime :: Integer -> Bool
@@ -125,3 +126,20 @@ armarPares = foldr (\x recu ys -> if null ys then [] else (x,head ys) : recu (ta
 --III
 mapDoble :: (a -> b -> c) -> [a] -> [b] -> [c]
 mapDoble f xs ys = mapPares f (armarPares xs ys)
+
+
+--ej17
+
+generate :: ([a] -> Bool) -> ([a] -> a) -> [a]
+generate stop next = generateFrom stop next []
+
+generateFrom:: ([a] -> Bool) -> ([a] -> a) -> [a] -> [a]
+generateFrom stop next xs | stop xs = init xs
+                          | otherwise = generateFrom stop next (xs ++ [next xs])
+--I
+generateBase :: ([a] -> Bool) -> a -> (a -> a) -> [a]
+generateBase stop x next = generate stop (\ys -> if null ys then next x else next (head ys)) 
+
+--II
+factoriales :: Int -> [Int]
+factoriales n = generate (\xs -> length xs == n) (\xs -> if null xs then 1 else (length xs + 1) * head xs )
