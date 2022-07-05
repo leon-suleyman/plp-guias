@@ -28,35 +28,59 @@ finalesDe(a(_, F, _), F).
 transicionesDe(a(_, _, T), T).
 
 %Auxiliar dada en clase
-%desde(+X, -Y).
-desde(X, X).
-desde(X, Y):-desde(X, Z),  Y is Z + 1.
+	%desde(+X, -Y).
+	desde(X, X).
+	desde(X, Y):-desde(X, Z),  Y is Z + 1.
 
-entre(X, Y, X) :- X =< Y.
-entre(X, Y, Z) :- X < Y, N is X+1, entre(N,Y,Z).
+	entre(X, Y, X) :- X =< Y.
+	entre(X, Y, Z) :- X < Y, N is X+1, entre(N,Y,Z).
 
+%auxiliares propios
+	%cantidadDeApariciones(+X, +L, ?N) no usa G&T
+	cantidadDeApariciones(_, [], 0).
+	cantidadDeApariciones(X,[X|XS], N) :- cantidadDeApariciones(X,XS,M), N is M+1.
+	cantidadDeApariciones(Y,[X|XS], N) :- Y\=X, cantidadDeApariciones(Y,XS,N).
 
-%cantidadDeApariciones(+X, +L, ?N)
-cantidadDeApariciones(_, [], 0).
-cantidadDeApariciones(X,[X|XS], N) :- cantidadDeApariciones(X,XS,M), N is M+1.
-cantidadDeApariciones(Y,[X|XS], N) :- Y\=X, cantidadDeApariciones(Y,XS,N).
+	%estadosDeTransiciones(+TS, -LS) no usa G&T
+	estadosDeTransiciones([],[]).
+	estadosDeTransiciones([(P,_,D)|TS],[P,D|LS]) :- estadosDeTransiciones(TS,LS).
+	
+	%borrarDeLista(+L1, +ElementosABorrar, -L1SinBorrados) no usa G&T
+	borrarDeLista(L1,[],L1).
+	borrarDeLista(L1,[X|XS], L) :- delete(L1,X,L2), borrarDeLista(L2,XS,L).
+	
+	%alcanzableDesde(+A, +EstadoPartida, +EstadoLlegada), si usa G&T
+	alcanzableDesde(A, SD, SH) :- estados(A, LT), length(LT, N), M is N+1, entre(2, M, X), caminoDeLongitud(A, X, _,_,SD, SH).
 
-%estadosDeTransiciones(+TS, -LS)
-estadosDeTransiciones([],[]).
-estadosDeTransiciones([(P,_,D)|TS],[P,D|LS]) :- estadosDeTransiciones(TS,LS).
+	%reconoceDesde(+Automata, +EstadoActual, ?Palabra) no usa G&T
+	reconoceDesde(a(_,SF,_), EA, []) :- member(EA, SF).
+	reconoceDesde(a(_,SF,Ts), EA, [D|Ds]) :-  reconoceDesde(a(_,SF,Ts), ES, Ds), member((EA,D,ES), Ts).
+
+%Proposiciones de validez de automatas:
+	%proposicionX(+A) A y B usan G&T
+
+	proposicionA(a(SI,LF,T)) :- estados(a(SI,LF,T), LE), borrarDeLista(LE,LF,LNF), forall(member(Q,LNF), member((Q,_,_), T)). 
+
+	proposicionB(a(SI,LF,T)) :- estados(a(SI,LF,T), LE), delete(LE, SI, L), forall(member(E, L), alcanzable(a(SI,LF,T), E)).
+
+	proposicionC(a(_,[_|_],_)). 
+
+	proposicionD(a(_,LF,_)) :- forall(member(E, LF), cantidadDeApariciones(E, LF, 1)).
+
+	proposicionE(a(_,_,Ts)) :- forall(member(T, Ts), cantidadDeApariciones(T, Ts,1)).
 
 %%Predicados pedidos.
 
-% 1) %esDeterministico(+Automata)
+% 1) %esDeterministico(+Automata), no es G&T(Generate And Test)
 esDeterministico(a(_,_,[])).
 esDeterministico(a(_,_,[(P,E,_)|XS])) :- cantidadDeApariciones((P,E,_),XS,0), esDeterministico(a(_,_,XS)).
 
 
-% 2) estados(+Automata, ?Estados)
+% 2) estados(+Automata, ?Estados) no es G&T
 estados(a(SI, LF, T), L) :- estadosDeTransiciones(T, ST), append([SI|ST],LF, FL), sort(FL, L).
 
 
-% 3)esCamino(+Automata, ?EstadoInicial, ?EstadoFinal, +Camino)
+% 3)esCamino(+Automata, ?EstadoInicial, ?EstadoFinal, +Camino) no es G&T
 esCamino(a(SI,_,_), SI, SI, [SI]).
 esCamino(a(_,_,T), S1, S2, [S1,S2]) :- member((S1,_,S2),T).
 esCamino(a(_,_,T), S1, SF, [S1,S2|LS]) :- member((S1,_,S2),T), esCamino(a(_,_,T), _, SF, [S2|LS]). 
@@ -64,7 +88,8 @@ esCamino(a(_,_,T), S1, SF, [S1,S2|LS]) :- member((S1,_,S2),T), esCamino(a(_,_,T)
 % 4) ¿el predicado anterior es o no reversible con respecto a Camino y por qué?
 % No, porque 'member' siempre devuelve la primera transición que encuentra,  de modo que para casos con ciclos, si una solucion entra en un ciclo.
 
-% 5) caminoDeLongitud(+Automata, +N, -Camino, -Etiquetas, ?S1, ?S2)
+% 5) caminoDeLongitud(+Automata, +N, -Camino, -Etiquetas, ?S1, ?S2) si usa G&T
+
 caminoDeLongitud(A, 1, [X], [], X, X) :- estados(A, ListaDeEstados),
 					   member(X, ListaDeEstados).
 caminoDeLongitud(A, N, [S1, SX|XS], [E|ES], S1, S2) :- N>1,
@@ -73,32 +98,25 @@ caminoDeLongitud(A, N, [S1, SX|XS], [E|ES], S1, S2) :- N>1,
 							 M is N-1, 
 							 caminoDeLongitud(A, M, [SX|XS], ES, SX, S2).
 
-% 6) alcanzable(+Automata, +Estado)
+% 6) alcanzable(+Automata, +Estado) si usa G&T
 alcanzable(a(SI, LF, T), S) :-  estados(a(SI, LF, T), LT), length(LT, N), M is N+1, entre(2, M, X), caminoDeLongitud(a(SI, LF, T), X, _,_,SI, S).
 
-% 7) automataValido(+Automata)
-
-borrarDeLista(L1,[],L1).
-borrarDeLista(L1,[X|XS], L) :- delete(L1,X,L2), borrarDeLista(L2,XS,L).
-
-proposicionA(a(SI,LF,T)) :- estados(a(SI,LF,T), LE), borrarDeLista(LE,LF,LNF), forall(member(Q,LNF), member((Q,_,_), T)). 
-
-proposicionB(a(SI,LF,T)) :- estados(a(SI,LF,T), LE), delete(LE, SI, L), forall(member(E, L), alcanzable(a(SI,LF,T), E)).
-
-automataValido(_).
+% 7) automataValido(+Automata) no usa G&T por si mismo, A y B si usan.
+automataValido(A) :- proposicionA(A), proposicionB(A), proposicionC(A), proposicionD(A), proposicionE(A).
 
 
 %--- NOTA: De acá en adelante se asume que los autómatas son válidos.
 
 
-% 8) hayCiclo(+Automata)
-hayCiclo(_).
+% 8) hayCiclo(+Automata) usa G&T
+hayCiclo(A) :- estados(A, LE), member(E, LE), alcanzableDesde(A, E, E), !.
 
-% 9) reconoce(+Automata, ?Palabra)
-reconoce(_, _).
+% 9) reconoce(+Automata, ?Palabra) no usa G&T
+reconoce(a(SI,SF,Ts), Palabra) :- reconoceDesde(a(SI,SF,Ts), SI, Palabra).
 
-% 10) PalabraMásCorta(+Automata, ?Palabra)
-palabraMasCorta(_, _).
+% 10) PalabraMásCorta(+Automata, ?Palabra) usa G&T
+palabraMasCorta(a(SI, LF, T), P) :- var(P), estados(a(SI, LF, T), LT), length(LT, N), M is N+1, entre(1, M, X), member(EF, LF), caminoDeLongitud(a(SI, LF, T), X, _, _, SI, EF), !, member(EF2, LF), caminoDeLongitud(a(SI, LF, T), X, _, P, SI, EF2).
+palabraMasCorta(a(SI, LF, T), P) :- nonvar(P), estados(a(SI, LF, T), LT), length(LT, N), M is N+1, entre(1, M, X), member(EF, LF), caminoDeLongitud(a(SI, LF, T), X, _, _, SI, EF), !, Y is X-1, length(P, Y), reconoce(a(SI, LF, T), P).
 
 %-----------------
 %----- Tests -----
