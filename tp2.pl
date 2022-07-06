@@ -92,7 +92,8 @@ estados(a(SI, LF, T), L) :- estadosDeTransiciones(T, ST), append([SI|ST],LF, FL)
 
 
 % 3)esCamino(+Automata, ?EstadoInicial, ?EstadoFinal, +Camino) no es G&T.
-esCamino(a(SI,_,_), SI, SI, [SI]).
+% Idea: busca una transicion para cada par de estados contigüos que conforman el camino, si el camino tiene un solo estado, busca una transicion del estado a si mismo.
+esCamino(a(_,_,T), S, S, [S]) :- member((S,_,S),T).
 esCamino(a(_,_,T), S1, S2, [S1,S2]) :- member((S1,_,S2),T).
 esCamino(a(_,_,T), S1, SF, [S1,S2|LS]) :- member((S1,_,S2),T), esCamino(a(_,_,T), _, SF, [S2|LS]). 
 
