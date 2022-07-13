@@ -12,6 +12,9 @@ ejemplo(9, a(s1, [s1], [(s1, a, s2), (s2, b, s1)])).
 ejemplo(10, a(s1, [s10, s11], 
         [(s2, a, s3), (s4, a, s5), (s9, a, s10), (s5, d, s6), (s7, g, s8), (s15, g, s11), (s6, i, s7), (s13, l, s14), (s8, m, s9), (s12, o, s13), (s14, o, s15), (s1, p, s2), (s3, r, s4), (s2, r, s12), (s10, s, s11)])).
 
+ejemplo(11, a(s1, [s2, s3], [(s2, b1, s2), (s1, a1, s2), (s1, a2, s3), (s2, b2, s3), (s3, c1, s2)])).
+ejemplo(12, a(s1, [s2, s3], [(s2, b1, s1), (s1, a1, s2), (s1, a2, s3), (s2, b2, s3), (s3, c1, s2)])).
+
 ejemploMalo(1, a(s1, [s2], [(s1, a, s1), (s1, b, s2), (s2, b, s2), (s2, a, s3)])). %s3 es un estado sin salida.
 ejemploMalo(2, a(s1, [sf], [(s1, a, s1), (sf, b, sf)])). %sf no es alcanzable.
 ejemploMalo(3, a(s1, [s2, s3], [(s1, a, s3), (s1, b, s3)])). %s2 no es alcanzable.
@@ -45,6 +48,9 @@ transicionesDe(a(_, _, T), T).
 	%las etiquetas de los estados que aparecen en ellas, puede contener etiquetas repetidas.
 	estadosDeTransiciones([],[]).
 	estadosDeTransiciones([(P,_,D)|TS],[P,D|LS]) :- estadosDeTransiciones(TS,LS).
+
+	%estadosConRepeticion(+Automata, -Estados) no usa G&T. Toma un automata y devuelve una lista que une estado inicial, estados de transiciiones y estados finales.
+	estadosConRepeticion(a(SI, LF, T), L) :- estadosDeTransiciones(T, ST), append([SI|ST],LF, L).
 	
 	%borrarDeLista(+L1, +ElementosABorrar, -L1SinElementosABorrar) no usa G&T. Borra de la lista L1 los elementos de la lista ElementosABorrar.
 	borrarDeLista(L1,[],L1).
@@ -59,6 +65,12 @@ transicionesDe(a(_, _, T), T).
 	% de mostrar todos los caminos, ya que si lo hiciesemos al revés podrían aparecer solo soluciones incrementales sobre un mismo ciclo.
 	reconoceDesde(a(_,SF,_), EA, []) :- member(EA, SF).
 	reconoceDesde(a(_,SF,Ts), EA, [D|Ds]) :-  reconoceDesde(a(_,SF,Ts), ES, Ds), member((EA,D,ES), Ts).
+
+	%longitudPosibleDeUnaPalabra(+Automata, ?Longitud)
+	longitudPosibleDeUnaPalabra(A,L) :- estados(A, LT), length(LT, N), M is N+1, entre(1, M, L).
+
+	%hayCaminoTerminadoEnEstadoFinalDeLongitud(+Automata, +Longitud)
+	hayCaminoTerminadoEnEstadoFinalDeLongitud(a(SI, LF, T), L) :- member(EF, LF), caminoDeLongitud(a(SI, LF, T), L, _, _, SI, EF).
 
 %Proposiciones de validez de automatas:
 	%proposicionX(+A) A y B usan G&T
@@ -88,13 +100,18 @@ esDeterministico(a(_,_,[(P,E,_)|XS])) :- cantidadDeApariciones((P,E,_),XS,0), es
 
 % 2) estados(+Automata, ?Estados) no es G&T. Toma el estado inicial, los estados finales y los estados que aparecen en transiciones,
 % forma una lista con todos ellos y la ordena (sort también remueve los repetidos).
-estados(a(SI, LF, T), L) :- estadosDeTransiciones(T, ST), append([SI|ST],LF, FL), sort(FL, L).
+estados(a(SI, LF, T), L) :- var(L), estadosConRepeticion(a(SI, LF, T), FL), sort(FL, L).
+estados(a(SI, LF, T), L) :- nonvar(L), 
+							estadosConRepeticion(a(SI, LF, T), FL), 
+							list_to_set(FL, SetFL), 
+							list_to_set(L, SetL), 
+							permutation(SetFL, SetL).
 
 
 % 3)esCamino(+Automata, ?EstadoInicial, ?EstadoFinal, +Camino) no es G&T.
 % Idea: busca una transicion para cada par de estados contigüos que conforman el camino, si el camino tiene un solo estado, busca una transicion del estado a si mismo.
 esCamino(a(_,_,T), S, S, [S]) :- member((S,_,S),T).
-esCamino(a(_,_,T), S1, S2, [S1,S2]) :- member((S1,_,S2),T).
+esCamino(a(_,_,T), S1, S2, [S1,S2]) :- S1 \= S2, member((S1,_,S2),T).
 esCamino(a(_,_,T), S1, SF, [S1,S2|LS]) :- member((S1,_,S2),T), esCamino(a(_,_,T), _, SF, [S2|LS]). 
 
 % 4) ¿el predicado anterior es o no reversible con respecto a Camino y por qué?
@@ -131,10 +148,10 @@ reconoce(a(SI,SF,Ts), Palabra) :- reconoceDesde(a(SI,SF,Ts), SI, Palabra).
 % 10) PalabraMásCorta(+Automata, ?Palabra) usa G&T. 
 %Idea: Si la palabra no viene instanciada, buscamos el camino de menor longitud probando con longitudes cada vez mas largas, una vez encontramos uno, tomamos esa longitud y dejamos de buscar,
 %luego buscamos todos los caminos que se puedan formar de esa longitud y devolvemos la lista de etiquetas (la palabra)
-palabraMasCorta(a(SI, LF, T), P) :- var(P), estados(a(SI, LF, T), LT), length(LT, N), M is N+1, entre(1, M, X), member(EF, LF), caminoDeLongitud(a(SI, LF, T), X, _, _, SI, EF), !, member(EF2, LF), caminoDeLongitud(a(SI, LF, T), X, _, P, SI, EF2).
+palabraMasCorta(a(SI, LF, T), P) :- var(P), longitudPosibleDeUnaPalabra(a(SI, LF, T), X), hayCaminoTerminadoEnEstadoFinalDeLongitud(a(SI, LF, T), X), !, member(EF2, LF), caminoDeLongitud(a(SI, LF, T), X, _, P, SI, EF2).
 %Si la palabra viene instanciada, buscamos la longitud del camino mas corto como en el caso anterior, le restamos 1 (porque el camino es de estados y la palabra de etiquetas) comparamos con la longitud de la palabra y 
 %si coincide, comprobamos que la palabra es reconocida por el automata.
-palabraMasCorta(a(SI, LF, T), P) :- nonvar(P), estados(a(SI, LF, T), LT), length(LT, N), M is N+1, entre(1, M, X), member(EF, LF), caminoDeLongitud(a(SI, LF, T), X, _, _, SI, EF), !, Y is X-1, length(P, Y), reconoce(a(SI, LF, T), P).
+palabraMasCorta(a(SI, LF, T), P) :- nonvar(P), longitudPosibleDeUnaPalabra(a(SI, LF, T), X), hayCaminoTerminadoEnEstadoFinalDeLongitud(a(SI, LF, T), X), !, Y is X-1, length(P, Y), reconoce(a(SI, LF, T), P).
 
 %-----------------
 %----- Tests -----
